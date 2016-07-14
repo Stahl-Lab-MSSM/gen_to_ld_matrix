@@ -1,0 +1,13 @@
+setup.py
+CMC_LD_extraction.egg-info/PKG-INFO
+CMC_LD_extraction.egg-info/SOURCES.txt
+CMC_LD_extraction.egg-info/dependency_links.txt
+CMC_LD_extraction.egg-info/entry_points.txt
+CMC_LD_extraction.egg-info/not-zip-safe
+CMC_LD_extraction.egg-info/top_level.txt
+ld_cmc/__init__.py
+ld_cmc/gen_data.py
+ld_cmc/ld_data.py
+ld_cmc/main.py
+ld_cmc/region.py
+ld_cmc/snp_data.py
