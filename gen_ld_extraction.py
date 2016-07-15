@@ -26,8 +26,8 @@ import os
 import numpy as np
 import pandas as pd
 import argparse
-from ld_cmc.ld_data import LDData
-from ld_cmc.region import Region 
+from gen_ld_extraction.ld_data import LDData
+from gen_ld_extraction.region import Region 
 
 def read_bedfile(bed):
     bed_regions=[]
