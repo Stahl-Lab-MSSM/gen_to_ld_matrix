@@ -1,3 +1,0 @@
-[console_scripts]
-cmc_ld_extract = ld_cmc.main:main
-
