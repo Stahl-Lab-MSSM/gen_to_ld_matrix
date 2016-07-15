@@ -28,26 +28,26 @@ class LDData(object):
        Highest level LDData object. 
     """
 
-    def __init__(self, reg, dosage_file_root, keep):
+    def __init__(self, reg, gen_file_root, keep):
         self._reg = reg
-        self._dosage_file_root = dosage_file_root
+        self._gen_file_root = gen_file_root
         self._keep = keep
 
     @property
     def reg(self):
         return self._reg
     @property
-    def dosage_file_root(self):
-        return self._dosage_file_root
+    def gen_file_root(self):
+        return self._gen_file_root
     @property
     def samples(self):
         return self._samples
     @property
     def keep(self):
         return self._keep
-    @property
-    def gen_data(self):
-        return self._gen_data
+#    @property
+#    def gen_data(self):
+#        return self._gen_data
     @property
     def dosages(self):
         return self._dosages
@@ -67,26 +67,22 @@ class LDData(object):
 
     def calc_ld(self):
         logging.info("Calculating LD matrix")
-        self.dosages.to_csv("Test2.txt", sep=" ", header=None, index=False)
+        #self.dosages.to_csv("Test2.txt", sep=" ", header=None, index=False)
         ld_matrix=np.corrcoef(self.dosages.ix[:,6:].astype(float).values)
         logging.info("Calculated LD matrix") 
         self.update_ld_matrix(ld_matrix)
 
-    def load_and_filter_gen(self):
+    def load_gen_and_generate_dosages(self):
         # initialise dosages
-        self._gen_data = (GenData(self.reg, self.dosage_file_root, self.keep))
-        self.gen_data.load_gen()
-        self.gen_data.sample_filter()
-        self.update_dosages(self.gen_data.get_dosage_frame())
+        gen_data = (GenData(self.reg, self.gen_file_root, self.keep))
+        gen_data.load_gen()
+        gen_data.sample_filter()
+        self.update_dosages(gen_data.get_dosage_frame())
 
 
     def write_outputs(self, output_root):
         meta_frame = self.dosages.ix[:,1:5]
-        meta_frame.columns = ["RSID","POS","A1","A2","MAF"]
-        try:
-            os.mkdir(output_root)
-        except OSError:
-            pass
+        meta_frame.columns = ["RSID","POS","A1","A2","FREQ1"]
         meta_frame.to_csv(os.path.join(output_root, self.reg.name + '.snpdat'),index=False, sep= " ")
         np.savetxt(os.path.join(output_root, self.reg.name+".ld"),self.ld_matrix)
 

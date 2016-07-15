@@ -23,6 +23,7 @@ import glob
 import logging
 import os
 import pandas as pd
+import numpy as np
 import sys
 
 class GenData(object):
@@ -35,7 +36,7 @@ class GenData(object):
         self._chrom = reg.chrom
         self._keep_list = keep
         self._file_root = genage_file_root
-        self._gen_data = None
+        self._gen = None
     
     @property
     def start(self):
@@ -50,88 +51,85 @@ class GenData(object):
     def keep_list(self):
         return self._keep
     @property
-    def dosages(self):
-        return self._gen_data
+    def gen(self):
+        return self._gen
     @property
     def file_root(self):
         return self._file_root
     @property
     def keep_list(self):
         return self._keep_list
-    def update_gen(self, dosages):
-        self._gen_data = dosages 
+    def update_gen(self, gen):
+        self._gen = gen 
 
     def get_dosage_frame(self):
         logging.info("Starting to create the dosages frame")
-        number_of_samples = (len(self.dosages.columns) -5 )/3
-        dosage_frame = pd.DataFrame(index=self.dosages.index, columns=range(number_of_samples +6))
-        for i in range(len(self.dosages.index)):
-            if( i % 1000 == 0):
-                logging.info("Processed {0} rows".format(i))
-            meta_info = []
-            for j in range(5):
-                meta_info.append(self.dosages.iat[i,j]) 
-            af = 0.0 
-            offset = 5
-            dosages = []
-            for j in range(number_of_samples):
-                jj = 3* j + 5  
-                tmp_dos = self.dosages.iat[i,jj] * 2.0 + self.dosages.iat[i,jj+1]
-                dosages.append(tmp_dos)
-                af += tmp_dos
-            af = af/(number_of_samples * 2)
-            if (af > 0.5):
-                af = 1 - af
-            meta_info.append(af)
-            meta_info.extend(dosages)
-            dosage_frame.iloc[i] = meta_info
+        number_of_samples = (len(self.gen.columns) -5 )/3
+        dosage_frame = pd.DataFrame(index=self.gen.index, columns=range(number_of_samples +6))
+        for i in range(5):
+            dosage_frame.iloc[:,i]=self.gen.iloc[:,i]
+        af = 0.0 
+        for j in range(number_of_samples):
+            jj = 3* j + 5  
+            dosage_frame.iloc[:,j+6] = self.gen.iloc[:,jj] * 2.0 + self.gen.iloc[:,jj+1]
+        dosage_frame.iloc[:,5] = dosage_frame.iloc[:,6:].apply(np.mean,axis=1) /2
         logging.info("Created the dosages frame")
         return dosage_frame
 
     def sample_filter(self):
         logging.info("Removing samples not in the keep file")
-        sample_filter = [False] * self.dosages
+        #sample_filter = [False] * self.gen
         keep_columns = range(5)
         # Keep list zero indexed and 3 values per sample so .....
         # i * 3 +5 = first sample genotype
         for i in self.keep_list:
-            keep_columns.append(i*3 + 5)
-            keep_columns.append(i*3 + 1 + 5)
-            keep_columns.append(i*3 + 2+ 5 )
-        self.update_gen(self.dosages.ix[:,keep_columns])
-        logging.info("Dosage matrix after removing samples, shape = {0}".format(self.dosages.shape))
+            keep_columns.append(i*3 + 5 )
+            keep_columns.append(i*3 + 1 + 5 )
+            keep_columns.append(i*3 + 2 + 5 )
+        self.update_gen(self.gen.ix[:,keep_columns])
+        logging.info("Dosage matrix after removing samples, shape = {0}".format(self.gen.shape))
 
 
     def load_gen(self):
         logging.info("Attempting to load region = chr{0}:{1}-{2}".format(self.chrom, self.start,self.end))
-        start_mb = (self.start/1e6)//5* 5
-        end_mb= (self.end/1e6+5)//5 * 5
+        start_mb = self.start/1e6
+        end_mb= self.end/1e6
         logging.info("File root {0}".format(self.file_root))
-        cmc_files = glob.glob(os.path.join(os.path.abspath(self.file_root), "CM6-pos-chr{0}*gen".format(self.chrom))) 
-        cmc_files = sorted(cmc_files, key= lambda x: int(x.split('.')[1].split('-')[0])) 
+        gen_path = os.path.abspath(os.path.dirname(self.file_root))
+        gen_basename = os.path.basename(self.file_root)
+        cmc_files = glob.glob(os.path.join(gen_path, gen_basename + "{0}_*.gen".format(self.chrom)))
+        try:
+            cmc_files[0]
+        except KeyError:
+            logging.info("Expecting gene files in File root {0} to be gzipped (*.gen.gz)".format(self.file_root))
+            cmc_files = glob.glob(os.path.join(gen_path, gen_basename + "{0}_*gen.gz".format(self.chrom)))
+            pass
+        cmc_files = sorted(cmc_files, key= lambda x: int(x.split('.')[1].split('-')[0]))
         files_to_load = []
         for cmc_file in cmc_files:
             cmc_start = int(cmc_file.split('.')[1].split('-')[0])
             cmc_end = int(cmc_file.split('.')[1].split('-')[1].replace("Mb",""))
-            if cmc_end > end_mb:
-                break
-            if cmc_start >= start_mb: 
+            if cmc_start <= start_mb and cmc_end >= start_mb: 
                 files_to_load.append(cmc_file)
+            if cmc_end >= end_mb:
+                break
         logging.info("Loading gen_files {0}".format(" ".join(files_to_load)))
         if len(files_to_load) < 1:
-            logging.error("Could not find any gen files for chr{0}:{1}-{2}".format(self.chrom, self.start, self.end))
-            sys.exit(1)
+            #logging.error("Could not find any gen files for chr{0}:{1}-{2}".format(self.chrom, self.start, self.end))
+            #sys.exit(1)
+            raise Warning("Could not find any gen files for chr{0}:{1}-{2}".format(self.chrom, self.start, self.end))
 
         for i, gen_file in enumerate(files_to_load):
             logging.info("Loading {0}".format(gen_file))
             if i < 1: 
                 data = pd.read_csv(gen_file, sep=" ", header=None)
-                logging.info("Dosage matrix before filtering SNPs: shape = {0}".format(str(data.shape)))
+                logging.info("Gen matrix before filtering SNPs: shape = {0}".format(str(data.shape)))
                 data= data[(data.ix[:,2] >= self.start) & (data.ix[:,2] <= self.end)]
-                logging.info("Dosage matrix after filtering SNPs: shape = {0}".format(str(data.shape)))
+                logging.info("Gen matrix after filtering SNPs: shape = {0}".format(str(data.shape)))
             else:
                 data_tmp  = pd.read_csv(gen_file, sep=" ", header=None)
-                data_tmp = data[(data.ix[:,2] >= self.start) & (data.ix[:,2] <= self.end)]
-                data = pd.concat(data_tmp)
+                data_tmp = data_tmp[(data_tmp.ix[:,2] >= self.start) & (data_tmp.ix[:,2] <= self.end)]
+                data = pd.concat([data,data_tmp])
+        # convert gene_data to dos_data
         self.update_gen(data)
         #data.to_csv(os.path.join(gen_file), sep=" ", header=False, index=False)
