@@ -67,8 +67,8 @@ class LDData(object):
 
     def calc_ld(self):
         logging.info("Calculating LD matrix")
-        #self.dosages.to_csv("Test2.txt", sep=" ", header=None, index=False)
-        ld_matrix=np.corrcoef(self.dosages.ix[:,6:].astype(float).values)
+        self.dosages.to_csv("Test2.txt", sep=" ", header=None, index=False)
+        ld_matrix=np.corrcoef(self.dosages.ix[:,7:].astype(float).values)
         logging.info("Calculated LD matrix") 
         self.update_ld_matrix(ld_matrix)
 
@@ -81,10 +81,11 @@ class LDData(object):
 
 
     def write_outputs(self, output_root):
-        meta_frame = self.dosages.ix[:,1:5]
-        meta_frame.columns = ["RSID","POS","A1","A2","FREQ1"]
+        meta_frame = self.dosages.ix[:,1:6]
+        meta_frame.columns = ["RSID","POS","A1","A2","FREQ1","GVAR"]
         meta_frame.to_csv(os.path.join(output_root, self.reg.name + '.snpdat'),index=False, sep= " ")
         np.savetxt(os.path.join(output_root, self.reg.name+".ld"),self.ld_matrix)
+        self.dosages.to_csv(os.path.join(output_root, self.reg.name + ".dos", index=False, sep=" " )
 
 
 

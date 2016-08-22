@@ -65,14 +65,16 @@ class GenData(object):
     def get_dosage_frame(self):
         logging.info("Starting to create the dosages frame")
         number_of_samples = (len(self.gen.columns) -5 )/3
-        dosage_frame = pd.DataFrame(index=self.gen.index, columns=range(number_of_samples +6))
+        dosage_frame = pd.DataFrame(index=self.gen.index, columns=range(number_of_samples +7))
         for i in range(5):
             dosage_frame.iloc[:,i]=self.gen.iloc[:,i]
         af = 0.0 
         for j in range(number_of_samples):
-            jj = 3* j + 5  
-            dosage_frame.iloc[:,j+6] = self.gen.iloc[:,jj] * 2.0 + self.gen.iloc[:,jj+1]
-        dosage_frame.iloc[:,5] = dosage_frame.iloc[:,6:].apply(np.mean,axis=1) /2
+            jj = 3* j + 5
+            dosage_frame.iloc[:,j+7] = self.gen.iloc[:,jj] * 2.0 + self.gen.iloc[:,jj+1]
+        dosage_frame.iloc[:,5] = dosage_frame.iloc[:,7:].apply(np.mean,axis=1) /2
+        dosage_frame.iloc[:,6] = dosage_frame.iloc[:,7:].apply(np.var,axis=1) 
+        logging.info("Calculated the variance")
         logging.info("Created the dosages frame")
         return dosage_frame
 
@@ -109,7 +111,7 @@ class GenData(object):
         for cmc_file in cmc_files:
             cmc_start = int(cmc_file.split('.')[1].split('-')[0])
             cmc_end = int(cmc_file.split('.')[1].split('-')[1].replace("Mb",""))
-            if cmc_start <= start_mb and cmc_end >= start_mb: 
+            if (cmc_start <= start_mb and cmc_end >= start_mb) or (cmc_start <= end_mb and cmc_end >= start_mb) : 
                 files_to_load.append(cmc_file)
             if cmc_end >= end_mb:
                 break
