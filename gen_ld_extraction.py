@@ -60,6 +60,7 @@ def read_keep(keep_f, samples):
             keep.add(indiv)
             #print keep
     keep = [(i) for i, e in enumerate(samples) if e in keep]
+    print(len(keep))
     return keep 
 
 
@@ -112,6 +113,16 @@ def read_keep(keep_f, samples):
 
 
 
+def load_summary_statistics(summary_statistics):
+    """
+        In the following format. This is then merged with the GEN files.
+
+        RSID CHR POS A1 A2 BETA SE P
+    """
+    logging.error("Not implemented yet, exiting")
+    sys.exit(0)
+    return None
+
 def main():
     parser = argparse.ArgumentParser(description="CMC LD matrix extraction")
     parser.add_argument("-g", "--gen_fileroot", dest="gen_fileroot", required=True)
@@ -120,6 +131,8 @@ def main():
     parser.add_argument("-o", "--out", dest="output_fileroot", required=True)
     parser.add_argument("-b", "--bed_intervals", dest="bed_file", required=True)
     parser.add_argument("-m", "--maf", dest="maf_filter", default=0.01)
+    parser.add_argument("-f", "--gen-file", dest="gen_file")
+    parser.add_argument("-s", "--summary-stats", dest="summary_statistics")
     args = parser.parse_args()
     args.maf_filter  = float(args.maf_filter)
 
@@ -151,12 +164,17 @@ def main():
     logging.info("Starting to load keep file") 
     keep_samples = read_keep(args.keep_file, samples)
     logging.info("Loaded {0} samples to keep".format(len(keep_samples)))
-    
+    if(args.summary_statistics is not None):
+        summary_statistics = args.summary_statistics
+        summary_stats = load_summary_statistics(summary_statistics)
+    if(args.gen_file is not None):
+        logging.info("hello")
+        gen_file = args.gen_file
     for region in bed_regions:
         ld_data = LDData(region, args.gen_fileroot,  keep_samples)
         logging.info("Loading gene files(s) and converting to dosages")
         try:
-            ld_data.load_gen_and_generate_dosages()
+            ld_data.load_gen_and_generate_dosages(gen_file)
             logging.info("Loaded gen file(s) and converted to dosages format")
             ld_data.filter_maf(args.maf_filter)
             ld_data.calc_ld()

@@ -72,9 +72,9 @@ class LDData(object):
         logging.info("Calculated LD matrix") 
         self.update_ld_matrix(ld_matrix)
 
-    def load_gen_and_generate_dosages(self):
+    def load_gen_and_generate_dosages(self, gene_file=None):
         # initialise dosages
-        gen_data = (GenData(self.reg, self.gen_file_root, self.keep))
+        gen_data = (GenData(self.reg, self.gen_file_root, self.keep, gen_file=None))
         gen_data.load_gen()
         gen_data.sample_filter()
         self.update_dosages(gen_data.get_dosage_frame())
@@ -85,7 +85,7 @@ class LDData(object):
         meta_frame.columns = ["RSID","POS","A1","A2","FREQ1","GVAR"]
         meta_frame.to_csv(os.path.join(output_root, self.reg.name + '.snpdat'),index=False, sep= " ")
         np.savetxt(os.path.join(output_root, self.reg.name+".ld"),self.ld_matrix)
-        self.dosages.to_csv(os.path.join(output_root, self.reg.name + ".dos", index=False, sep=" " )
+        self.dosages.to_csv(os.path.join(output_root, self.reg.name + ".dos"), index=False, sep=" " )
 
 
 

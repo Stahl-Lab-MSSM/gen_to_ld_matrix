@@ -70,6 +70,8 @@ class GenData(object):
             dosage_frame.iloc[:,i]=self.gen.iloc[:,i]
         af = 0.0 
         for j in range(number_of_samples):
+            if(j % 10 == 0):
+                logging.info("Processed {0} samples".format(j))
             jj = 3* j + 5
             dosage_frame.iloc[:,j+7] = self.gen.iloc[:,jj] * 2.0 + self.gen.iloc[:,jj+1]
         dosage_frame.iloc[:,5] = dosage_frame.iloc[:,7:].apply(np.mean,axis=1) /2
@@ -92,22 +94,26 @@ class GenData(object):
         logging.info("Dosage matrix after removing samples, shape = {0}".format(self.gen.shape))
 
 
-    def load_gen(self):
+    def load_gen(self, gen_file=None):
         logging.info("Attempting to load region = chr{0}:{1}-{2}".format(self.chrom, self.start,self.end))
         start_mb = self.start/1e6
         end_mb= self.end/1e6
-        logging.info("File root {0}".format(self.file_root))
-        gen_path = os.path.abspath(os.path.dirname(self.file_root))
-        gen_basename = os.path.basename(self.file_root)
-        cmc_files = glob.glob(os.path.join(gen_path, gen_basename + "{0}_*.gen".format(self.chrom)))
-        try:
-            cmc_files[0]
-        except KeyError:
-            logging.info("Expecting gene files in File root {0} to be gzipped (*.gen.gz)".format(self.file_root))
-            cmc_files = glob.glob(os.path.join(gen_path, gen_basename + "{0}_*gen.gz".format(self.chrom)))
-            pass
-        cmc_files = sorted(cmc_files, key= lambda x: int(x.split('.')[1].split('-')[0]))
-        files_to_load = []
+
+        if(gen_file is None):
+            logging.info("File root {0}".format(self.file_root))
+            gen_path = os.path.abspath(os.path.dirname(self.file_root))
+            gen_basename = os.path.basename(self.file_root)
+            cmc_files = glob.glob(os.path.join(gen_path, gen_basename + "{0}_*.gen".format(self.chrom)))
+            try:
+                cmc_files[0]
+            except KeyError:
+                logging.info("Expecting gene files in File root {0} to be gzipped (*.gen.gz)".format(self.file_root))
+                cmc_files = glob.glob(os.path.join(gen_path, gen_basename + "{0}_*gen.gz".format(self.chrom)))
+                pass
+            cmc_files = sorted(cmc_files, key= lambda x: int(x.split('.')[1].split('-')[0]))
+            files_to_load = []
+        else:
+            cmc_files = [gen_file]
         for cmc_file in cmc_files:
             cmc_start = int(cmc_file.split('.')[1].split('-')[0])
             cmc_end = int(cmc_file.split('.')[1].split('-')[1].replace("Mb",""))
