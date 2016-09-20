@@ -174,7 +174,7 @@ def main():
         ld_data = LDData(region, args.gen_fileroot,  keep_samples)
         logging.info("Loading gene files(s) and converting to dosages")
         try:
-            ld_data.load_gen_and_generate_dosages(gen_file)
+            ld_data.load_gen_and_generate_dosages(gen_file, summary_statistics)
             logging.info("Loaded gen file(s) and converted to dosages format")
             ld_data.filter_maf(args.maf_filter)
             ld_data.calc_ld()
