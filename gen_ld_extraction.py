@@ -132,7 +132,7 @@ def main():
     parser.add_argument("-b", "--bed_intervals", dest="bed_file", required=True)
     parser.add_argument("-m", "--maf", dest="maf_filter", default=0.01)
     parser.add_argument("-f", "--gen-file", dest="gen_file")
-    parser.add_argument("-s", "--summary-stats", dest="summary_statistics")
+    parser.add_argument("-i", "--summary-stats", dest="summary_statistics")
     args = parser.parse_args()
     args.maf_filter  = float(args.maf_filter)
 
